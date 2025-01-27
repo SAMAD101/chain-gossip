@@ -1,0 +1,12 @@
+[package]
+name = "chain-gossip"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
+futures = { version = "0.3.31" }
+libp2p = { version = "0.55.0", features = ["tokio", "gossipsub", "mdns", "noise", "macros", "yamux", "quic", "kad"] }
+serde = { version = "1.0.217", features = ["derive"] }
+bincode = "1.3.3"
+rand = "0.8.5"
