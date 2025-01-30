@@ -38,7 +38,7 @@ Terminate a node by pressing `Ctrl+c` in the terminal.
 
 ### Demo video
 
-<video src="chain-gossip.mkv"></video>
+[chain-gossip.webm](https://github.com/user-attachments/assets/4ac76b85-686a-4c44-af7a-cf36b3f970ee)
 
 ### Conclusion
 This simple project explores the applicatgion of *libp2p* in building decentralized 
