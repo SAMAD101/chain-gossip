@@ -15,6 +15,7 @@ use std::{
 use tokio::{io, io::AsyncBufReadExt, select};
 use serde::{Serialize, Deserialize};
 
+// Create a custom behaviour for the network
 #[derive(NetworkBehaviour)]
 struct MyBehaviour {
     gossipsub: gossipsub::Behaviour,
@@ -22,6 +23,7 @@ struct MyBehaviour {
     kademlia: kad::Behaviour<TStore>,
 }
 
+// Struct to handle transaction messages
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TransactionMessage {
     signature: String,
@@ -31,6 +33,7 @@ struct TransactionMessage {
 }
 
 fn create_dummy_transaction(sender: String) -> TransactionMessage {
+    // Function to create dummy transaction
     TransactionMessage {
         signature: format!("signature-{}", rand::random::<u64>()),
         sender,
@@ -98,12 +101,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Read full lines from stdin
     let mut stdin = io::BufReader::new(io::stdin()).lines();
 
+    // Get the local peer ID
+    let mut local_peer_id = swarm.local_peer_id().to_string();
+
     // Handle swarm events
     loop {
         select! {
             Ok(Some(line)) = stdin.next_line() => {
-                 // Create a dummy transaction
-                let transaction = create_dummy_transaction("peer_id".to_string());
+                // Create a dummy transaction
+                let transaction = create_dummy_transaction(local_peer_id.clone());
 
                 // Serialize the transaction
                 let serialized_transaction = bincode::serialize(&transaction).unwrap();
