@@ -1,19 +1,19 @@
 use libp2p::{
     futures::StreamExt,
     gossipsub,
+    kad::{self, store::MemoryStore as TStore, Quorum, Record, RecordKey},
     mdns,
-    kad::{self, store::MemoryStore as TStore, Record, RecordKey, Quorum},
-    swarm::{SwarmEvent, NetworkBehaviour},
+    swarm::{NetworkBehaviour, SwarmEvent},
     Multiaddr,
 };
+use serde::{Deserialize, Serialize};
 use std::{
     collections::hash_map::DefaultHasher,
     error::Error,
     hash::{Hash, Hasher},
-    time::{SystemTime, Duration},
+    time::{Duration, SystemTime},
 };
 use tokio::{io, io::AsyncBufReadExt, select};
-use serde::{Serialize, Deserialize};
 
 // Create a custom behaviour for the network
 #[derive(NetworkBehaviour)]
@@ -75,16 +75,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             // Build a kademlia network behaviour
             let kademlia = kad::Behaviour::new(
                 key.public().to_peer_id(),
-                TStore::new(key.public().to_peer_id())
+                TStore::new(key.public().to_peer_id()),
             );
 
             // Build a mdns network behaviour
-            let mdns = mdns::tokio::Behaviour::new(
-                mdns::Config::default(),
-                key.public().to_peer_id()
-            )?;
+            let mdns =
+                mdns::tokio::Behaviour::new(mdns::Config::default(), key.public().to_peer_id())?;
 
-            Ok(MyBehaviour { gossipsub, mdns, kademlia })
+            Ok(MyBehaviour {
+                gossipsub,
+                mdns,
+                kademlia,
+            })
         })?
         .build();
 
@@ -95,6 +97,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Listen on a local address using QUIC (UDP)
     let addr: Multiaddr = "/ip4/0.0.0.0/udp/0/quic-v1".parse().unwrap();
     swarm.listen_on(addr)?;
+
+    // optional manual dial, for when mDNS multicast is blocked (e.g. macOS firewall)
+    if let Some(peer) = std::env::args().nth(1) {
+        swarm.dial(peer.parse::<Multiaddr>()?)?;
+        println!("Dialed {peer}");
+    }
 
     println!("Node is listening for connections...");
 
